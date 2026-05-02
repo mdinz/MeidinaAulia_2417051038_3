@@ -1,9 +1,20 @@
 package com.example.mytam.model
 
+import com.google.gson.annotations.SerializedName
+
 data class VehicleService(
+    @SerializedName("namaServis")
     val namaServis: String,
+
+    @SerializedName("tanggalTerakhir")
     val tanggalTerakhir: String,
+
+    @SerializedName("kmBerikutnya")
     val kmBerikutnya: Int,
+
+    @SerializedName("catatan")
     val catatan: String,
-    val imageRes: Int
+
+    @SerializedName("imageUrl")
+    val imageUrl: String
 )
