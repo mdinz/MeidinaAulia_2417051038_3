@@ -32,6 +32,7 @@ import com.example.mytam.model.VehicleService
 import com.example.mytam.network.ApiClient
 import com.example.mytam.ui.theme.MyTAMTheme
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -61,7 +62,7 @@ fun DaftarServisScreen() {
         try {
             services = ApiClient.apiService.getServices()
             isLoading = false
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             isLoading = false
             isError = true
         }
@@ -90,7 +91,15 @@ fun DaftarServisScreen() {
                         .padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Gagal Memuat Data")
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            "Gagal Memuat Data",
+                            color = Color.Red,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Pastikan koneksi internet Anda menyala")
+                    }
                 }
             }
 
@@ -99,7 +108,8 @@ fun DaftarServisScreen() {
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding),
-                    contentPadding = PaddingValues(16.dp)
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
 
                     item {
@@ -119,15 +129,13 @@ fun DaftarServisScreen() {
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
                             text = "Daftar Servis Lengkap",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
-
-                        Spacer(modifier = Modifier.height(8.dp))
                     }
 
                     items(services) { service ->
@@ -136,7 +144,6 @@ fun DaftarServisScreen() {
                                 snackbarHostState.showSnackbar("Berhasil dijadwalkan")
                             }
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
             }
@@ -163,12 +170,11 @@ fun ServisRowItem(service: VehicleService) {
             )
 
             Column(modifier = Modifier.padding(8.dp)) {
-
                 Text(
                     text = service.namaServis,
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
-
                 Text(
                     text = "KM ${service.kmBerikutnya}",
                     style = MaterialTheme.typography.bodySmall
@@ -185,6 +191,8 @@ fun DetailServisItem(
 ) {
 
     var isFavorite by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -238,10 +246,26 @@ fun DetailServisItem(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
-                    onClick = onClick,
+                    onClick = {
+                        isLoading = true
+                        scope.launch {
+                            delay(1500)
+                            isLoading = false
+                            onClick()
+                        }
+                    },
+                    enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Jadwalkan Servis")
+
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Jadwalkan Servis")
+                    }
                 }
             }
         }
