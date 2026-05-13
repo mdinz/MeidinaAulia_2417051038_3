@@ -4,34 +4,26 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
-
 import androidx.compose.material3.*
-
 import androidx.compose.runtime.*
-
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-
 import coil.compose.AsyncImage
-
 import com.example.mytam.model.VehicleService
-import com.example.mytam.network.ApiClient
+import com.example.mytam.repository.VehicleServiceRepository
 import com.example.mytam.ui.theme.MyTAMTheme
-
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -51,6 +43,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun DaftarServisScreen() {
 
+    val repository = remember { VehicleServiceRepository() }
+
     var services by remember { mutableStateOf<List<VehicleService>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var isError by remember { mutableStateOf(false) }
@@ -59,13 +53,13 @@ fun DaftarServisScreen() {
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        try {
-            services = ApiClient.apiService.getServices()
-            isLoading = false
-        } catch (_: Exception) {
-            isLoading = false
-            isError = true
-        }
+        isLoading = true
+
+        val result = repository.getServices()
+
+        services = result
+        isLoading = false
+        isError = result.isEmpty()
     }
 
     Scaffold(
@@ -75,7 +69,7 @@ fun DaftarServisScreen() {
         when {
             isLoading -> {
                 Box(
-                    Modifier
+                    modifier = Modifier
                         .fillMaxSize()
                         .padding(padding),
                     contentAlignment = Alignment.Center
@@ -86,18 +80,22 @@ fun DaftarServisScreen() {
 
             isError -> {
                 Box(
-                    Modifier
+                    modifier = Modifier
                         .fillMaxSize()
                         .padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Text(
-                            "Gagal Memuat Data",
+                            text = "Gagal Memuat Data",
                             color = Color.Red,
                             fontWeight = FontWeight.Bold
                         )
+
                         Spacer(modifier = Modifier.height(8.dp))
+
                         Text("Pastikan koneksi internet Anda menyala")
                     }
                 }
@@ -141,7 +139,9 @@ fun DaftarServisScreen() {
                     items(services) { service ->
                         DetailServisItem(service) {
                             scope.launch {
-                                snackbarHostState.showSnackbar("Berhasil dijadwalkan")
+                                snackbarHostState.showSnackbar(
+                                    "Berhasil dijadwalkan"
+                                )
                             }
                         }
                     }
@@ -153,13 +153,11 @@ fun DaftarServisScreen() {
 
 @Composable
 fun ServisRowItem(service: VehicleService) {
-
     Card(
         modifier = Modifier.width(160.dp),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column {
-
             AsyncImage(
                 model = service.imageUrl,
                 contentDescription = service.namaServis,
@@ -169,12 +167,15 @@ fun ServisRowItem(service: VehicleService) {
                 contentScale = ContentScale.Crop
             )
 
-            Column(modifier = Modifier.padding(8.dp)) {
+            Column(
+                modifier = Modifier.padding(8.dp)
+            ) {
                 Text(
                     text = service.namaServis,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
+
                 Text(
                     text = "KM ${service.kmBerikutnya}",
                     style = MaterialTheme.typography.bodySmall
@@ -189,9 +190,9 @@ fun DetailServisItem(
     service: VehicleService,
     onClick: () -> Unit
 ) {
-
     var isFavorite by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
+
     val scope = rememberCoroutineScope()
 
     Card(
@@ -202,7 +203,6 @@ fun DetailServisItem(
         Column {
 
             Box {
-
                 AsyncImage(
                     model = service.imageUrl,
                     contentDescription = service.namaServis,
@@ -213,24 +213,32 @@ fun DetailServisItem(
                 )
 
                 IconButton(
-                    onClick = { isFavorite = !isFavorite },
+                    onClick = {
+                        isFavorite = !isFavorite
+                    },
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(8.dp)
                 ) {
                     Icon(
-                        imageVector = if (isFavorite)
+                        imageVector = if (isFavorite) {
                             Icons.Filled.Favorite
-                        else
-                            Icons.Outlined.FavoriteBorder,
+                        } else {
+                            Icons.Outlined.FavoriteBorder
+                        },
                         contentDescription = "Favorite",
-                        tint = if (isFavorite) Color.Red else Color.White
+                        tint = if (isFavorite) {
+                            Color.Red
+                        } else {
+                            Color.White
+                        }
                     )
                 }
             }
 
-            Column(modifier = Modifier.padding(16.dp)) {
-
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
                 Text(
                     text = service.namaServis,
                     style = MaterialTheme.typography.headlineMedium,
@@ -248,6 +256,7 @@ fun DetailServisItem(
                 Button(
                     onClick = {
                         isLoading = true
+
                         scope.launch {
                             delay(1500)
                             isLoading = false
@@ -257,7 +266,6 @@ fun DetailServisItem(
                     enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-
                     if (isLoading) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
