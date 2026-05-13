@@ -1,7 +1,7 @@
-package com.example.mytam.repository
+package com.example.mytam.data.repository
 
-import com.example.mytam.model.VehicleService
-import com.example.mytam.network.ApiClient
+import com.example.mytam.data.api.ApiClient
+import com.example.mytam.data.model.VehicleService
 
 class VehicleServiceRepository {
 

@@ -1,4 +1,4 @@
-package com.example.mytam.model
+package com.example.mytam.data.model
 
 import com.google.gson.annotations.SerializedName
 

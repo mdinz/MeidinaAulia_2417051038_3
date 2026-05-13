@@ -1,6 +1,6 @@
-package com.example.mytam.network
+package com.example.mytam.data.api
 
-import com.example.mytam.model.VehicleService
+import com.example.mytam.data.model.VehicleService
 import retrofit2.http.GET
 
 interface ApiService {

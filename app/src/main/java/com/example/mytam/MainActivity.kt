@@ -21,8 +21,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.example.mytam.model.VehicleService
-import com.example.mytam.repository.VehicleServiceRepository
+import com.example.mytam.data.model.VehicleService
+import com.example.mytam.data.repository.VehicleServiceRepository
 import com.example.mytam.ui.theme.MyTAMTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -42,7 +42,6 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun DaftarServisScreen() {
-
     val repository = remember { VehicleServiceRepository() }
 
     var services by remember { mutableStateOf<List<VehicleService>>(emptyList()) }
@@ -63,15 +62,17 @@ fun DaftarServisScreen() {
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { padding ->
+        snackbarHost = {
+            SnackbarHost(snackbarHostState)
+        }
+    ) { paddingValues ->
 
         when {
             isLoading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(padding),
+                        .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
@@ -82,7 +83,7 @@ fun DaftarServisScreen() {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(padding),
+                        .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -91,12 +92,15 @@ fun DaftarServisScreen() {
                         Text(
                             text = "Gagal Memuat Data",
                             color = Color.Red,
+                            style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        Text("Pastikan koneksi internet Anda menyala")
+                        Text(
+                            text = "Pastikan koneksi internet Anda menyala"
+                        )
                     }
                 }
             }
@@ -105,7 +109,7 @@ fun DaftarServisScreen() {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(padding),
+                        .padding(paddingValues),
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
@@ -137,13 +141,16 @@ fun DaftarServisScreen() {
                     }
 
                     items(services) { service ->
-                        DetailServisItem(service) {
-                            scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    "Berhasil dijadwalkan"
-                                )
+                        DetailServisItem(
+                            service = service,
+                            onSuccess = {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        "Berhasil dijadwalkan"
+                                    )
+                                }
                             }
-                        }
+                        )
                     }
                 }
             }
@@ -155,7 +162,8 @@ fun DaftarServisScreen() {
 fun ServisRowItem(service: VehicleService) {
     Card(
         modifier = Modifier.width(160.dp),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column {
             AsyncImage(
@@ -188,20 +196,22 @@ fun ServisRowItem(service: VehicleService) {
 @Composable
 fun DetailServisItem(
     service: VehicleService,
-    onClick: () -> Unit
+    onSuccess: () -> Unit
 ) {
     var isFavorite by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
+    var isButtonLoading by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(6.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column {
-
             Box {
                 AsyncImage(
                     model = service.imageUrl,
@@ -247,26 +257,26 @@ fun DetailServisItem(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text("Tanggal: ${service.tanggalTerakhir}")
-                Text("KM berikutnya: ${service.kmBerikutnya}")
+                Text("Tanggal Servis: ${service.tanggalTerakhir}")
+                Text("KM Berikutnya: ${service.kmBerikutnya}")
                 Text(service.catatan)
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
                     onClick = {
-                        isLoading = true
+                        isButtonLoading = true
 
                         scope.launch {
                             delay(1500)
-                            isLoading = false
-                            onClick()
+                            isButtonLoading = false
+                            onSuccess()
                         }
                     },
-                    enabled = !isLoading,
+                    enabled = !isButtonLoading,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    if (isLoading) {
+                    if (isButtonLoading) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
                             strokeWidth = 2.dp
