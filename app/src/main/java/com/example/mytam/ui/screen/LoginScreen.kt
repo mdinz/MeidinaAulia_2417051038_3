@@ -23,13 +23,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.mytam.R
+import com.example.mytam.data.model.UserSession
 import com.example.mytam.ui.component.IconButtonMenu
 
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: (UserSession) -> Unit
 ) {
-    var email by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
 
@@ -62,18 +63,18 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(28.dp))
 
         OutlinedTextField(
-            value = email,
+            value = username,
             onValueChange = {
-                email = it
+                username = it
                 errorMessage = ""
             },
             label = {
-                Text("Email")
+                Text("Username / Email")
             },
             leadingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_account),
-                    contentDescription = "Email"
+                    contentDescription = "Username"
                 )
             },
             modifier = Modifier.fillMaxWidth()
@@ -114,10 +115,18 @@ fun LoginScreen(
             text = "Masuk",
             iconRes = R.drawable.ic_login,
             onClick = {
-                if (email == "user@gmail.com" && password == "123456") {
-                    onLoginSuccess()
+                if (username.isNotBlank() && password == "123456") {
+                    val user = UserSession(
+                        name = formatNameFromLogin(username),
+                        email = if (username.contains("@")) username else "$username@gmail.com",
+                        vehicle = "Honda Beat",
+                        plateNumber = "BE 1234 TAM",
+                        status = "Aktif"
+                    )
+
+                    onLoginSuccess(user)
                 } else {
-                    errorMessage = "Email atau password salah"
+                    errorMessage = "Username atau password salah"
                 }
             },
             modifier = Modifier.fillMaxWidth()
@@ -126,8 +135,23 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Login demo: user@gmail.com / 123456",
+            text = "Password demo: 123456",
             style = MaterialTheme.typography.bodySmall
         )
     }
+}
+
+private fun formatNameFromLogin(input: String): String {
+    val cleanName = input
+        .substringBefore("@")
+        .replace(".", " ")
+        .replace("_", " ")
+        .trim()
+
+    return cleanName
+        .split(" ")
+        .filter { it.isNotBlank() }
+        .joinToString(" ") { word ->
+            word.lowercase().replaceFirstChar { it.uppercase() }
+        }
 }
